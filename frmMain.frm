@@ -17,6 +17,30 @@ Begin VB.Form frmMain
       Top             =   600
       Width           =   1450
    End
+   Begin VB.Label lblRemoteHost 
+      Caption         =   "Remote Host"
+      Height          =   330
+      Left            =   1800
+      TabIndex        =   3
+      Top             =   600
+      Width           =   2640
+   End
+   Begin VB.Label lblRemoteIP 
+      Caption         =   "Remote IP:"
+      Height          =   330
+      Left            =   1800
+      TabIndex        =   2
+      Top             =   1020
+      Width           =   2640
+   End
+   Begin VB.Label lblRemotePort 
+      Caption         =   "Remote Port:"
+      Height          =   330
+      Left            =   1800
+      TabIndex        =   1
+      Top             =   1440
+      Width           =   2640
+   End
 End
 Attribute VB_Name = "frmMain"
 Attribute VB_GlobalNameSpace = False
@@ -24,7 +48,7 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
-Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
+Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal length As Long)
 Private Declare Sub ZeroMemory Lib "kernel32" Alias "RtlZeroMemory" (dst As Any, ByVal iLen&)
 
 Private Declare Function GetFileAttributes Lib "kernel32" Alias "GetFileAttributesA" (ByVal lpFileName As String) As Long
@@ -240,13 +264,13 @@ End Function
 '     * @param String $data Data containing the set of FastCGI NVPair
 '     * @return array of NVPair
 '     */
-Function readNvpair(ByVal Data As String, Optional ByVal Length As Long = 0) As String
+Function readNvpair(ByVal Data As String, Optional ByVal length As Long = 0) As String
 Dim p As Long, nlen As Long, vlen As Long, s_array As String
-        If (Length = 0) Then
-            Length = Len(Data)
+        If (length = 0) Then
+            length = Len(Data)
         End If
      p = 0
- Do While (p <> Length)
+ Do While (p <> length)
             p = p + 1
          nlen = Asc(Mid$(Data, p, 1))
             If (nlen >= 128) Then
@@ -670,11 +694,7 @@ Function Process_PHP(ByVal cmdFile As String, ByVal Method As String) As String
     Dim cmdCookie As String
     Dim cmdLine As String
     Dim phpOut As String
-        Text1.Text = ""
-'    cmdFile = App.Path & "\phpme.php?id=1&q=x"
-''        If Left$(cmdFile, 1) = "\" Then
-''            cmdFile = App.Path & cmdFile
-''        End If
+          
 If InStr(cmdFile, "?") Then
 '    cmdArgs = Mid$(cmdFile, InStrRev(cmdFile, "?") + 1)
 '    cmdFile = Mid$(cmdFile, 1, InStrRev(cmdFile, "?") - 1)
@@ -745,7 +765,7 @@ Dim Environs As String
 'Process_PHP = Dos.ExecuteCommand(cmdLine, Environs, sPath)
 'Process_PHP = Dos.ExecuteCGI(" -d max_file_uploads=10", Environs, rInfo.DataStr)
 'Process_PHP = Dos.ExecuteCGI(" -c E:\Ampps\php-5.6\php.ini", Environs, rInfo.DataStr)
-Process_PHP = Dos.ExecuteCGI("", Environs, rInfo.DataStr)
+'Process_PHP = Dos.ExecuteCGI("", Environs, rInfo.DataStr)
 End Function
 Private Sub cServer_DataArrival(ByVal lngSocket As Long)
 'Dim strData As String
@@ -1044,15 +1064,9 @@ Private Sub cServer_SendProgress(ByVal lngSocket As Long, ByVal bytesSent As Lon
 ''End If
 End Sub
 Private Sub Form_Unload(Cancel As Integer)
-    cmdCloseSqlserver_Click
-Set Dos = Nothing
     If Not php_cgi_client Is Nothing Then
         php_cgi_client.CloseAll
         Set php_cgi_client = Nothing
-    End If
-    If Not cClient Is Nothing Then
-        cClient.CloseAll
-        Set cClient = Nothing
     End If
     If Not cServer Is Nothing Then
         cServer.CloseAll
@@ -1347,11 +1361,11 @@ Do
                  FCGIPacketHeader.response = FCGIPacketHeader.response & FCGIPacketHeader.content
            End If
             If (FCGIPacketHeader.type = FCGI_Consts.END_REQUEST) Then
-                    Text1.Text = FCGIPacketHeader.response
+'                    Text1.Text = FCGIPacketHeader.response
                         php_cgi_client.CloseAll
-                 Open App.Path & "\htnl_repsonse.txt" For Output As 1
-                    Print #1, FCGIPacketHeader.response
-                Close 1
+'                 Open App.Path & "\htnl_repsonse.txt" For Output As 1
+'                    Print #1, FCGIPacketHeader.response
+'                Close 1
             End If
 Loop While Len(packet) <> 0
 
