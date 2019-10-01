@@ -91,7 +91,7 @@ Attribute cServer.VB_VarHelpID = -1
 Private WithEvents php_cgi_client  As cWinsock
 Attribute php_cgi_client.VB_VarHelpID = -1
 Private rInfo As ConnectionInfo
-Dim Header_Received As Boolean
+Dim FCGI_Content_Received As Boolean
 Private Enum FCGI_Consts
      VERSION_1 = 1
      BEGIN_REQUEST = 1
@@ -648,55 +648,54 @@ Dim sPath As String
         End If
 
 Dim sHeader As String
-'Dim Environs As String
-'    Environs = Environs & "REDIRECT_STATUS=true;;"
-'    Environs = Environs & "HTTP_USER_AGENT=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Safari/537.36;;"
-'    Environs = Environs & "DOCUMENT_ROOT=" & sPath & ";;"
-'    Environs = Environs & "CONTEXT_DOCUMENT_ROOT=" & sPath & ";;"
-'    Environs = Environs & "SERVER_SOFTWARE=Apache/2.4.27 (Win32) OpenSSL/1.1.0f PHP/7.0.16;;"
-'    Environs = Environs & "SERVER_PROTOCOL=HTTP/1.1;;"
-'    Environs = Environs & "SCRIPT_NAME=" & scriptname & ";;"
-'    Environs = Environs & "PHP_SELF=" & scriptname & ";;"
-'    Environs = Environs & "SERVER_NAME=localhost;;"
-'    Environs = Environs & "HTTP_COOKIE=" & Header("Cookie") & ";;"
-'    Environs = Environs & "REQUEST_SCHEME=http;;"
-'        If Method = "POST" Then
-''            Environs = Environs & "CONTENT_TYPE=application/x-www-form-urlencoded;;"
-'            Environs = Environs & "CONTENT_TYPE=" & Header("Content-type") & ";;"
-'            Environs = Environs & "CONTENT_LENGTH=" & Len(rInfo.DataStr) & ";;"
-'            Environs = Environs & "HTTP_ACCEPT=" & Header("Accept") & ";;"
-'            Environs = Environs & "MAX_FILE_UPLOADS=10;;"
-'            Environs = Environs & "PATH_INFO=" & sPath & "/" & ";;"
-'        Else
-'            Environs = Environs & "HTTP_ACCEPT=text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8;;"
-'
-'        End If
+Dim doc_uri As String
+    If InStr(cmdFile, uri) Then
+        doc_uri = uri & Mid$(cmdFile, InStr(cmdFile, uri) + Len(uri))
+    End If
 sHeader = sHeader & "GATEWAY_INTERFACE=FastCGI/1.0" & vbCrLf
 sHeader = sHeader & "SCRIPT_FILENAME=" & cmdFile & vbCrLf
 sHeader = sHeader & "QUERY_STRING=" & cmdArgs & vbCrLf
 sHeader = sHeader & "REQUEST_METHOD=" & Method & vbCrLf 'GET OR POST
-sHeader = sHeader & "SERVER_PROTOCOL=HTTP/1.1" & vbCrLf
+sHeader = sHeader & "REQUEST_URI=" & uri & vbCrLf
+sHeader = sHeader & "DOCUMENT_URI=" & doc_uri & vbCrLf
+sHeader = sHeader & "SCRIPT_NAME=" & scriptname & vbCrLf
+sHeader = sHeader & "PHP_SELF=" & scriptname & vbCrLf
+sHeader = sHeader & "REQUEST_SCHEME=http" & vbCrLf
 sHeader = sHeader & "REMOTE_HOST=localhost" & vbCrLf
 sHeader = sHeader & "REMOTE_ADDR=127.0.0.1" & vbCrLf
 sHeader = sHeader & "REMOTE_PORT=8080" & vbCrLf
 sHeader = sHeader & "SERVER_PORT=8080" & vbCrLf
 sHeader = sHeader & "HTTP_HOST=localhost:8080" & vbCrLf
-sHeader = sHeader & "REQUEST_URI=" & uri & vbCrLf
-sHeader = sHeader & "SCRIPT_NAME=/web/laravel-5.4.23/public/index.php" & vbCrLf
-sHeader = sHeader & "DOCUMENT_URI=/web/laravel-5.4.23/public/index.php" & vbCrLf
+sHeader = sHeader & "HTTP_USER_AGENT=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Safari/537.36" & vbCrLf
+sHeader = sHeader & "DOCUMENT_ROOT=" & sPath & vbCrLf
+sHeader = sHeader & "CONTEXT_DOCUMENT_ROOT=" & sPath & vbCrLf
 sHeader = sHeader & "SERVER_SOFTWARE=nginx/1.16.0" & vbCrLf
-sHeader = sHeader & "SERVER_ADDR=127.0.0.1" & vbCrLf
+'sHeader = sHeader & "SERVER_SOFTWARE=Apache/2.4.27 (Win32) OpenSSL/1.1.0f PHP/7.0.16" & vbCrLf
+sHeader = sHeader & "SERVER_PROTOCOL=HTTP/1.1" & vbCrLf
 sHeader = sHeader & "SERVER_NAME=localhost" & vbCrLf
-sHeader = sHeader & "CONTENT_TYPE=" & vbCrLf
-sHeader = sHeader & "CONTENT_LENGTH=0" & vbCrLf
+sHeader = sHeader & "REDIRECT_STATUS=true" & vbCrLf
+sHeader = sHeader & "HTTP_COOKIE=" & Header("Cookie") & vbCrLf
+sHeader = sHeader & "SERVER_ADDR=127.0.0.1" & vbCrLf
+        If Method = "POST" Then
+'            sHeader = sHeader & "CONTENT_TYPE=application/x-www-form-urlencoded" & vbCrLf
+            sHeader = sHeader & "CONTENT_TYPE=" & Header("Content-type") & vbCrLf
+            sHeader = sHeader & "CONTENT_LENGTH=" & Len(rInfo.DataStr) & vbCrLf
+            sHeader = sHeader & "HTTP_ACCEPT=" & Header("Accept") & vbCrLf
+            sHeader = sHeader & "MAX_FILE_UPLOADS=10" & vbCrLf
+            sHeader = sHeader & "PATH_INFO=" & sPath & "/" & vbCrLf
+        Else
+            sHeader = sHeader & "CONTENT_TYPE=" & vbCrLf
+            sHeader = sHeader & "CONTENT_LENGTH=0" & vbCrLf
+            sHeader = sHeader & "HTTP_ACCEPT=text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" & vbCrLf
 
+        End If
 Dim request  As String, paramsRequest As String, nvpair() As String, C As Long, nv() As String, resp As String
 Dim stdin As String
  
 Dim id As Long, keepAlive As Long
             Randomize
         id = Random2(1, RShift(1, 16) - 1)
-'        // Using persistent sockets implies you want them keept alive by server!
+'        // Using persistent sockets implies you want them keep alive by server!
         keepAlive = 1 'true
 request = Chr(0) & Chr(FCGI_Consts.RESPONDER) & Chr(keepAlive) & String$(5, Chr(0))
 request = buildPacket(FCGI_Consts.BEGIN_REQUEST, request, id)
@@ -717,90 +716,20 @@ Next
         End If
         request = request & buildPacket(FCGI_Consts.stdin, "", id)
         
- 
-'request = "GET / HTTP/1.0" & vbCrLf & _
-'    "Host: www.bgdev.org" & vbCrLf & _
-'    "Connection: close" & vbCrLf & vbCrLf
-'request = "З         З�  GATEWAY_INTERFACEFastCGI/1.0REQUEST_METHODGETLSCRIPT_FILENAMEF:\NGINX_PHP_MYSQL\nginx-1.16.0_run/www/web/laravel-5.4.23/console/index.php%SCRIPT_NAME/web/laravel-5.4.23/console/index.php QUERY_STRINGREQUEST_URI/web/laravel-5.4.23/console/%DOCUMENT_URI/web/laravel-5.4.23/console/index.phpSERVER_SOFTWAREnginx/1.16.0    REMOTE_ADDR127.0.0.1REMOTE_PORT9985  SERVER_ADDR127.0.0.1SERVER_PORT80    SERVER_NAMElocalhostSERVER_PROTOCOLHTTP/1.1 CONTENT_TYPECONTENT_LENGTH0З    З    "
-'        If Not csocket.SyncSendText(request, Timeout:=LNG_TIMEOUT) Then
-'            GoTo QH
-'        End If
-Dim b As Boolean
-'    b = csocket.SyncWaitForEvent(5000, ucsSfdAll)
-'
-'        resp = csocket.SyncReceiveText(10000, Timeout:=LNG_TIMEOUT)
-'                    FCGIPacketHeader.content = ""
-'
-'       Do
-'            Exit Do
-'             resp = readPacket(csocket)
-'
-'            If (FCGIPacketHeader.type = FCGI_Consts.StdOut Or FCGIPacketHeader.type = FCGI_Consts.StdErr) Then
-''                if ($resp['type'] == self::STDERR) {
-''                    $this->_requests[$resp['requestId']]['state'] = self::REQ_STATE_ERR;
-''                }
-''                $this->_requests[$resp['requestId']]['response'] .= $resp['content'];
-'            End If
-'            If (FCGIPacketHeader.type = FCGI_Consts.END_REQUEST) Then
-''                $this->_requests[$resp['requestId']]['state'] = self::REQ_STATE_OK;
-''                if ($resp['requestId'] == $requestId) {
-''                    break;
-''                }
-'                Exit Do
-'            End If
-''            if (microtime(true) - $startTime >= ($timeoutMs * 1000)) {
-''                // Reset
-''                $this->set_ms_timeout($this->_readWriteTimeout);
-''                throw new \Exception('Timed out');
-''            }
-'         Loop While (FCGIPacketHeader.contentLength > 0)
-'
-''        if (!is_array($resp)) {
-''            $info = stream_get_meta_data($this->_sock);
-''
-''            // We must reset timeout but it must be AFTER we get info
-''            $this->set_ms_timeout($this->_readWriteTimeout);
-''
-''            if ($info['timed_out']) {
-''                throw new TimedOutException('Read timed out');
-''            }
-''
-''            if ($info['unread_bytes'] == 0
-''                    && $info['blocked']
-''                    && $info['eof']) {
-''                throw new ForbiddenException('Not in white list. Check listen.allowed_clients.');
-''            }
-''
-''            throw new \Exception('Read failed');
-''        }
-''
-''        // Reset timeout
-''        $this->set_ms_timeout($this->_readWriteTimeout);
-'
-''        switch (ord($resp['content']{4})) {
-''            Case self:: CANT_MPX_CONN:
-''                throw new \Exception('This app can\'t multiplex [CANT_MPX_CONN]');
-''                break;
-''            Case self:: OVERLOADED:
-''                throw new \Exception('New request rejected; too busy [OVERLOADED]');
-''                break;
-''            Case self:: UNKNOWN_ROLE:
-''                throw new \Exception('Role value not known [UNKNOWN_ROLE]');
-''                break;
-''            Case self:: REQUEST_COMPLETE:
-''                return $this->_requests[$requestId]['response'];
-''        }
-'
-'            csocket.Close_
 If php_cgi_client Is Nothing Then
     Set php_cgi_client = New cWinsock
 End If
     php_cgi_client.CloseAll
-            Header_Received = False
+            FCGI_Content_Received = False
 FCGIPacketHeader.content = request
 FCGIPacketHeader.response = ""
-Header_Received = False
+ 
         php_cgi_client.Connect "127.0.0.1", 9000
+'Do While FCGI_Content_Received = False
+'    DoEvents
+'Loop
+'    Process_PHP = FCGIPacketHeader.response
+    
 End Function
 Private Sub cServer_DataArrival(ByVal lngSocket As Long)
     Dim rData As String, sHeader As String, RequestedFile As String, ContentType As String
@@ -998,26 +927,27 @@ cServer.Recv lngSocket, rData
                                 Get rInfo.FileNum, , rInfo.DataStr
                         Close rInfo.FileNum
                     Else
-                        Close rInfo.FileNum
-                        Dim phpHeaders As String
-                            
-                        rInfo.DataStr = Process_PHP(CompletePath & "?" & RequestVars, "GET")
-                    If rInfo.DataStr <> "" And InStr(rInfo.DataStr, vbCrLf & vbCrLf) Then
-                        phpHeaders = Mid$(rInfo.DataStr, 1, InStr(rInfo.DataStr, vbCrLf & vbCrLf) - 1)
-                        rInfo.DataStr = Mid$(rInfo.DataStr, InStr(rInfo.DataStr, vbCrLf & vbCrLf) + 4)
-                    End If
-                    If rInfo.DataStr = "" Then
-                        rInfo.DataStr = phpHeaders
-                        phpHeaders = ""
-                    End If
-                        rInfo.TotalLength = Len(sHeader) + Len(rInfo.DataStr)
-                        sHeader = "HTTP/1.0 200 OK" & vbNewLine & _
-                                "Server: " & ServerName & vbNewLine & _
-                                ContentType & vbNewLine & _
-                                "Content-Length: " & Len(rInfo.DataStr) & _
-                                  vbNewLine & phpHeaders & _
-                                vbNewLine & vbNewLine
-                    End If
+                            Close rInfo.FileNum
+                            Dim phpHeaders As String
+                                
+                            rInfo.DataStr = Process_PHP(CompletePath & "?" & RequestVars, "GET")
+'                            If rInfo.DataStr <> "" And InStr(rInfo.DataStr, vbCrLf & vbCrLf) Then
+'                                phpHeaders = Mid$(rInfo.DataStr, 1, InStr(rInfo.DataStr, vbCrLf & vbCrLf) - 1)
+'                                rInfo.DataStr = Mid$(rInfo.DataStr, InStr(rInfo.DataStr, vbCrLf & vbCrLf) + 4)
+'                            End If
+'                            If rInfo.DataStr = "" Then
+'                                rInfo.DataStr = phpHeaders
+'                                phpHeaders = ""
+'                            End If
+'                            rInfo.TotalLength = Len(sHeader) + Len(rInfo.DataStr)
+'                            sHeader = "HTTP/1.0 200 OK" & vbNewLine & _
+'                                    "Server: " & ServerName & vbNewLine & _
+'                                    ContentType & vbNewLine & _
+'                                    "Content-Length: " & Len(rInfo.DataStr) & _
+'                                      vbNewLine & phpHeaders & _
+'                                    vbNewLine & vbNewLine
+                                Exit Sub
+                        End If
                 End If
                 ' send the header, the Sck_SendComplete event is gonna send the file...
                 cServer.Send lngSocket, sHeader & rInfo.DataStr
@@ -1333,7 +1263,7 @@ Dim packet As String, buf As String, BufLen As Long, bytes_received As Long
 Do
         packet = ""
         bytes_received = php_cgi_client.Recv(lngSocket, packet, FCGI_Consts.HEADER_LEN)
-       If Len(packet) = 0 Then
+       If bytes_received = -1 Or Len(packet) = 0 Then
             Exit Do
         End If
 
@@ -1342,18 +1272,28 @@ Do
         If FCGIPacketHeader.contentLength > 0 Then
                 BufLen = FCGIPacketHeader.contentLength
                 Do While BufLen <> 0
+                        DoEvents
                     buf = ""
                     bytes_received = php_cgi_client.Recv(lngSocket, buf, BufLen)
-                    FCGIPacketHeader.content = FCGIPacketHeader.content & Mid$(buf, 1, bytes_received)
-                    BufLen = BufLen - bytes_received 'Len(buf)
+                     If bytes_received <> -1 Then
+                            FCGIPacketHeader.content = FCGIPacketHeader.content & Mid$(buf, 1, bytes_received)
+                            BufLen = BufLen - bytes_received 'Len(buf)
+                    Else
+                        Exit Do
+                    End If
                 Loop
         End If
         If FCGIPacketHeader.paddingLength > 0 Then
                 BufLen = FCGIPacketHeader.paddingLength
                   Do While BufLen <> 0
+                        DoEvents
                     buf = ""
                     bytes_received = php_cgi_client.Recv(lngSocket, buf, BufLen)
-                    BufLen = BufLen - bytes_received 'Len(buf)
+                    If bytes_received <> -1 Then
+                        BufLen = BufLen - bytes_received 'Len(buf)
+                    Else
+                        Exit Do
+                    End If
                 Loop
         End If
             If (FCGIPacketHeader.type = FCGI_Consts.StdOut Or FCGIPacketHeader.type = FCGI_Consts.StdErr) Then
@@ -1362,13 +1302,37 @@ Do
             If (FCGIPacketHeader.type = FCGI_Consts.END_REQUEST) Then
 '                    Text1.Text = FCGIPacketHeader.response
                         php_cgi_client.CloseAll
-'                 Open App.Path & "\htnl_repsonse.txt" For Output As 1
+'                 Open App.Path & "\fcgi_repsonse.txt" For Output As 1
 '                    Print #1, FCGIPacketHeader.response
 '                Close 1
+                Exit Do
             End If
 Loop While Len(packet) <> 0
-
-
+    FCGI_Content_Received = True
+                Dim sHeader As String, phpHeaders As String
+                Close rInfo.FileNum
+                    
+                rInfo.DataStr = FCGIPacketHeader.response
+                If rInfo.DataStr <> "" And InStr(rInfo.DataStr, vbCrLf & vbCrLf) Then
+                    phpHeaders = Mid$(rInfo.DataStr, 1, InStr(rInfo.DataStr, vbCrLf & vbCrLf) - 1)
+                    rInfo.DataStr = Mid$(rInfo.DataStr, InStr(rInfo.DataStr, vbCrLf & vbCrLf) + 4)
+                End If
+                If rInfo.DataStr = "" Then
+                    rInfo.DataStr = phpHeaders
+                    phpHeaders = ""
+                End If
+                rInfo.TotalLength = Len(sHeader) + Len(rInfo.DataStr)
+                sHeader = "HTTP/1.0 200 OK" & vbNewLine & _
+                        "Server: " & ServerName & vbNewLine & _
+                        "Content-Type: text/html" & vbNewLine & _
+                        "Content-Length: " & Len(rInfo.DataStr) & _
+                          vbNewLine & phpHeaders & _
+                        vbNewLine & vbNewLine
+             
+            cServer.Send lngSocket, sHeader & rInfo.DataStr
+End Sub
+Private Sub php_cgi_client_OnClose(ByVal lngSocket As Long)
+    FCGI_Content_Received = True
 End Sub
 
 Private Sub php_cgi_client_OnConnect(ByVal lngSocket As Long)
@@ -1376,34 +1340,12 @@ Private Sub php_cgi_client_OnConnect(ByVal lngSocket As Long)
      lblRemoteIP.Caption = "Remote IP: " & php_cgi_client.GetRemoteIP(php_cgi_client.ConnectSocket)
      lblRemotePort.Caption = "Remote Port: " & php_cgi_client.GetRemotePort(php_cgi_client.ConnectSocket)
 
-'Dim sHeader As String
-'sHeader = "SCRIPT_NAME=/phpme.php \" & vbCrLf
-'sHeader = sHeader & "SCRIPT_FILENAME=/phpme.php \" & vbCrLf
-'sHeader = sHeader & "QUERY_STRING=VAR1 \" & vbCrLf
-'sHeader = sHeader & "DOCUMENT_ROOT=" & App.Path & "\" & " \" & vbCrLf
-'sHeader = sHeader & "REQUEST_METHOD=GET \" & vbCrLf
-'
-'sHeader = sHeader & "GATEWAY_INTERFACE=FastCGI/1.0" & vbCrLf
-'sHeader = sHeader & "REQUEST_METHOD=GET" & vbCrLf
-'sHeader = sHeader & "SCRIPT_FILENAME=F:\NGINX_PHP_MYSQL\nginx-1.16.0_run/www/web/laravel-5.4.23/console/index.php" & vbCrLf
-'sHeader = sHeader & "SCRIPT_NAME=/web/laravel-5.4.23/console/index.php" & vbCrLf
-'sHeader = sHeader & "QUERY_STRING=" & vbCrLf
-'sHeader = sHeader & "REQUEST_URI=/web/laravel-5.4.23/console/" & vbCrLf
-'sHeader = sHeader & "DOCUMENT_URI=/web/laravel-5.4.23/console/index.php" & vbCrLf
-'sHeader = sHeader & "SERVER_SOFTWARE=nginx/1.16.0" & vbCrLf
-'sHeader = sHeader & "REMOTE_ADDR=127.0.0.1" & vbCrLf
-'sHeader = sHeader & "REMOTE_PORT=9985" & vbCrLf
-'sHeader = sHeader & "SERVER_ADDR=127.0.0.1" & vbCrLf
-'sHeader = sHeader & "SERVER_PORT=80" & vbCrLf
-'sHeader = sHeader & "SERVER_NAME=localhost" & vbCrLf
-'sHeader = sHeader & "SERVER_PROTOCOL=HTTP/1.1" & vbCrLf
-'sHeader = sHeader & "CONTENT_TYPE=" & vbCrLf
-'sHeader = sHeader & "CONTENT_LENGTH=0" & vbCrLf
 
    php_cgi_client.Send lngSocket, FCGIPacketHeader.content
 End Sub
 
 Private Sub php_cgi_client_OnError(ByVal lngRetCode As Long, ByVal strDescription As String)
+    FCGI_Content_Received = True
 Caption = "php_cgi_client_OnError " & strDescription
 End Sub
 
