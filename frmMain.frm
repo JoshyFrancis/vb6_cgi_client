@@ -541,7 +541,7 @@ If ContentType = "multipart/form-data" Then
                         Exit For
                     End If
                 Next
-                    
+
                 If Idx = -1 Then
                         Idx = RequestCount
                     ReDim Preserve RequestVars(Idx)
@@ -568,7 +568,7 @@ If ContentType = "multipart/form-data" Then
                     Exit Do
                 End If
             P1 = P1 + 1
-                
+
         Loop
             
 ElseIf ContentType = "application/x-www-form-urlencoded" Then
@@ -705,6 +705,7 @@ Dim request  As String, paramsRequest As String, nvpair() As String, C As Long, 
 Dim stdin As String
  
 Dim id As Long, keepAlive As Long
+                    stdin = rInfo.DataStr
             Randomize
         id = Random2(1, RShift(1, 16) - 1)
 '        // Using persistent sockets implies you want them keep alive by server!
@@ -978,7 +979,7 @@ cServer.Recv lngSocket, rData
             Close C
         If rInfo.sType = "POST" Then
             rInfo.DataStr = rInfo.DataStr & rData
-            If Len(rInfo.DataStr) >= rInfo.TotalLength Then
+            If Len(rInfo.DataStr) >= rInfo.TotalLength Then ' Multipart Boundary
                 If rInfo.boundary <> "" Then
                     If Mid$(rInfo.DataStr, Len(rInfo.DataStr) - (Len(rInfo.boundary) + 3), Len(rInfo.boundary)) = rInfo.boundary Then
                         Process_Post lngSocket
@@ -987,6 +988,7 @@ cServer.Recv lngSocket, rData
                     Process_Post lngSocket
                 End If
             End If
+                    Process_Post lngSocket
             
         Else
             ' sometimes the browser makes "HEAD" requests (but it's not inplemented in this project)
