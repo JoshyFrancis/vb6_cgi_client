@@ -136,6 +136,7 @@ Private Type type_FCGIPacketHeader
     reserved As Long
     content As String
     response As String
+    lngSocket As Long
 End Type
 
 Private FCGIPacketHeader As type_FCGIPacketHeader
@@ -428,7 +429,7 @@ Dim C As Long
         End If
     Next
 End Function
-Function Process_Request(ByRef ContentType As String) As String
+Function Process_Request(ByVal lngSocket As Long, ByRef ContentType As String) As String
 Dim ResponseData As String, C As Long, sFile As String, f As Integer
 Dim Ext As String
             If IsDir(App.Path & "\uploads") = False Then
@@ -455,7 +456,7 @@ Dim Ext As String
     End If
 Ext = LCase$(Mid$(rInfo.FileName, InStrRev(rInfo.FileName, ".") + 1))
     If Ext = "php" Then
-        ResponseData = Process_PHP(rInfo.FileName & "?" & rInfo.RequestVars, "POST")
+        ResponseData = Process_PHP(lngSocket, rInfo.FileName & "?" & rInfo.RequestVars, "POST")
     End If
         Process_Request = ResponseData
 End Function
@@ -580,7 +581,7 @@ End If
 ''        For C = 0 To RequestCount - 1
 ''            rInfo.DataStr = rInfo.DataStr & RequestVars(C).Name & "=" & URLencode(RequestVars(C).Value) & "&"
 ''        Next
-            ResponseData = Process_Request(ContentType)
+            ResponseData = Process_Request(lngSocket, ContentType)
             
                 rInfo.DataStr = ResponseData
 
@@ -589,6 +590,8 @@ End If
         If rInfo.DataStr <> "" Then
             phpHeaders = Mid$(rInfo.DataStr, 1, InStr(rInfo.DataStr, vbCrLf & vbCrLf) - 1)
             rInfo.DataStr = Mid$(rInfo.DataStr, InStr(rInfo.DataStr, vbCrLf & vbCrLf) + 4)
+        Else
+            Exit Sub 'if PHP
         End If
                          
     ' build the header
@@ -611,7 +614,7 @@ End If
         
  
 End Sub
-Function Process_PHP(ByVal cmdFile As String, ByVal Method As String) As String
+Function Process_PHP(ByVal lngSocket As Long, ByVal cmdFile As String, ByVal Method As String) As String
     Dim cmdArgs As String
     Dim cmdCookie As String
     Dim cmdLine As String
@@ -723,7 +726,7 @@ End If
             FCGI_Content_Received = False
 FCGIPacketHeader.content = request
 FCGIPacketHeader.response = ""
- 
+FCGIPacketHeader.lngSocket = lngSocket
         php_cgi_client.Connect "127.0.0.1", 9000
 'Do While FCGI_Content_Received = False
 '    DoEvents
@@ -930,7 +933,7 @@ cServer.Recv lngSocket, rData
                             Close rInfo.FileNum
                             Dim phpHeaders As String
                                 
-                            rInfo.DataStr = Process_PHP(CompletePath & "?" & RequestVars, "GET")
+                            rInfo.DataStr = Process_PHP(lngSocket, CompletePath & "?" & RequestVars, "GET")
 '                            If rInfo.DataStr <> "" And InStr(rInfo.DataStr, vbCrLf & vbCrLf) Then
 '                                phpHeaders = Mid$(rInfo.DataStr, 1, InStr(rInfo.DataStr, vbCrLf & vbCrLf) - 1)
 '                                rInfo.DataStr = Mid$(rInfo.DataStr, InStr(rInfo.DataStr, vbCrLf & vbCrLf) + 4)
@@ -1329,7 +1332,7 @@ Loop While Len(packet) <> 0
                           vbNewLine & phpHeaders & _
                         vbNewLine & vbNewLine
              
-            cServer.Send lngSocket, sHeader & rInfo.DataStr
+            cServer.Send FCGIPacketHeader.lngSocket, sHeader & rInfo.DataStr
 End Sub
 Private Sub php_cgi_client_OnClose(ByVal lngSocket As Long)
     FCGI_Content_Received = True

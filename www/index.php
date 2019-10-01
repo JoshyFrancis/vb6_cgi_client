@@ -44,7 +44,7 @@
 	echo "hi\r\n";
 	echo "<br>";
 
-print "<img src=\"cloudoux logo.png\" width=100 height=100><h1>This Site is hosted on Hyper X 5.0</h1>";
+print "<img src=\"php_fcgi_big.png\" width=100 height=100><h1>This Site is hosted on Hyper X 5.0</h1>";
 
 				function isSSL() { return (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443; }
 		//$url=$_SERVER['REQUEST_URI'];

@@ -7,6 +7,7 @@ Class=iSubclass; isubclass.cls
 IconForm="frmMain"
 Startup="frmMain"
 HelpFile=""
+ExeName32="vb6_fcgi_client.exe"
 Command32=""
 Name="vb6_fcgi_client"
 HelpContextID="0"
