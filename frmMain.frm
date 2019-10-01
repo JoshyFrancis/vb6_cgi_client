@@ -1,16 +1,25 @@
 VERSION 5.00
 Begin VB.Form frmMain 
    Caption         =   "An FCGI client in Visual Basic. Supports PHP only."
-   ClientHeight    =   5700
+   ClientHeight    =   1950
    ClientLeft      =   120
    ClientTop       =   450
-   ClientWidth     =   9975
+   ClientWidth     =   5595
    LinkTopic       =   "Form1"
-   ScaleHeight     =   5700
-   ScaleWidth      =   9975
+   ScaleHeight     =   1950
+   ScaleWidth      =   5595
    StartUpPosition =   3  'Windows Default
+   Begin VB.CommandButton cmdStop 
+      Caption         =   "&Stop"
+      Enabled         =   0   'False
+      Height          =   370
+      Left            =   120
+      TabIndex        =   4
+      Top             =   1080
+      Width           =   1450
+   End
    Begin VB.CommandButton cmdListen 
-      Caption         =   "Listen"
+      Caption         =   "&Listen"
       Height          =   370
       Left            =   120
       TabIndex        =   0
@@ -48,17 +57,14 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
-Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal length As Long)
-Private Declare Sub ZeroMemory Lib "kernel32" Alias "RtlZeroMemory" (dst As Any, ByVal iLen&)
-
-Private Declare Function GetFileAttributes Lib "kernel32" Alias "GetFileAttributesA" (ByVal lpFileName As String) As Long
 Const FILE_ATTRIBUTE_DIRECTORY = &H10
+Private Declare Function GetFileAttributes Lib "kernel32" Alias "GetFileAttributesA" (ByVal lpFileName As String) As Long
 ' change this to your server name
 Private Const ServerName As String = "Web Server Version 1.0.0"
 
 ' this project was designed for only one share
 ' change the path to the directory you want to share
-Private Const PathShared As String = ""
+Private Const PathShared As String = "" 'App.Path can change accordingly
 
 Private Type ConnectionInfo
     FileNum As Integer  ' file number of the file opened on the current connection
@@ -202,19 +208,9 @@ End Property
 '
 'MyByte = HiByte(MyWord) ' Get the HiByte (same with LoByte)
 'HiByte(MyWord) = MyByte ' Set the HiByte (same with LoByte)
-'/**
-'     * Build a FastCGI packet
-'     *
-'     * @param Integer $type Type of the packet
-'     * @param String $content Content of the packet
-'     * @param Integer $requestId RequestId
-'     */
+' Build a FastCGI packet
 Function buildPacket(ByVal ntype As Long, ByVal content As String, Optional ByVal requestId As Long = 1) As String
 Dim clen As Long, strpacket As String
-'echo 1 & 0xFF;=1 =1 And &HFF
-'echo 1 >> 8;//left shift=0= LSHIFT(1,8)
-'echo 1 << 8;//right shift=256=RSHIFT(1,8)
-'echo 1 | 0xFF;=255=1 OR &HFF
      clen = Len(content)
     strpacket = Chr(FCGI_Consts.VERSION_1)        '/* version */
     strpacket = strpacket & Chr(ntype)                   '  /* type */
@@ -227,13 +223,7 @@ Dim clen As Long, strpacket As String
         strpacket = strpacket & content                     ' /* content */
     buildPacket = strpacket
 End Function
-'    /**
-'     * Build an FastCGI Name value pair
-'     *
-'     * @param String $name Name
-'     * @param String $value Value
-'     * @return String FastCGI Name value pair
-'     */
+'Build an FastCGI Name value pair
 Function buildNvpair(ByVal Name As String, ByVal Value As String) As String
 Dim nlen As Long, vlen As Long, nvpair As String
         nlen = Len(Name)
@@ -257,13 +247,7 @@ Dim nlen As Long, vlen As Long, nvpair As String
 '        Clipboard.SetText nvpair & Name & Value, vbCFText
         buildNvpair = nvpair & Name & Value
 End Function
-
-'    /**
-'     * Read a set of FastCGI Name value pairs
-'     *
-'     * @param String $data Data containing the set of FastCGI NVPair
-'     * @return array of NVPair
-'     */
+' Read a set of FastCGI Name value pairs
 Function readNvpair(ByVal Data As String, Optional ByVal length As Long = 0) As String
 Dim p As Long, nlen As Long, vlen As Long, s_array As String
         If (length = 0) Then
@@ -301,23 +285,9 @@ Dim p As Long, nlen As Long, vlen As Long, s_array As String
     Loop
         readNvpair = s_array
 End Function
-'
-'    /**
-'     * Decode a FastCGI Packet
-'     *
-'     * @param String $data String containing all the packet
-'     * @return array
-'     */
+'Decode a FastCGI Packet
 Function decodePacketHeader(ByVal Data As String) As String
 Dim ret As String
-'        $ret = array();
-'        $ret['version']       = ord($data{0});
-'        $ret['type']          = ord($data{1});
-'        $ret['requestId']     = (ord($data{2}) << 8) + ord($data{3});
-'        $ret['contentLength'] = (ord($data{4}) << 8) + ord($data{5});
-'        $ret['paddingLength'] = ord($data{6});
-'        $ret['reserved']      = ord($data{7});
-'        return $ret;
 FCGIPacketHeader.version = Asc(Mid$(Data, 1, 1))
 FCGIPacketHeader.type = Asc(Mid$(Data, 2, 1))
 FCGIPacketHeader.requestId = RShift(Asc(Mid$(Data, 3, 1)), 8) + Asc(Mid$(Data, 4, 1))
@@ -326,22 +296,34 @@ FCGIPacketHeader.paddingLength = Asc(Mid$(Data, 7, 1))
 FCGIPacketHeader.reserved = Asc(Mid$(Data, 8, 1))
         decodePacketHeader = ret
 End Function
-Function mt_rand(ByVal nmin As Long, ByVal nmax As Long) As Long
+Function Random2(ByVal nmin As Long, ByVal nmax As Long) As Long
 Dim num As Long
 r:
     num = Rnd * nmax
 If num < nmin Then
     GoTo r
 End If
-    mt_rand = num
+    Random2 = num
 End Function
 Private Sub cmdListen_Click()
 If cServer Is Nothing Then
     Set cServer = New cWinsock
         cServer.Listen 8080
 End If
-
+    cmdListen.Enabled = False
+    cmdStop.Enabled = True
 End Sub
+
+Private Sub cmdStop_Click()
+    If Not cServer Is Nothing Then
+        cServer.CloseAll
+        Set cServer = Nothing
+    End If
+        cmdStop.Enabled = False
+        cmdListen.Enabled = True
+        
+End Sub
+
 Private Sub cServer_OnClose(ByVal lngSocket As Long)
     Caption = "cServer_OnClose " & lngSocket & " Connections : " & cServer.ConnectionCount
 End Sub
@@ -630,66 +612,6 @@ End If
  
 End Sub
 Function Process_PHP(ByVal cmdFile As String, ByVal Method As String) As String
-'Spawning php-win.exe as a child process to handle scripting in Windows applications has a few quirks (all having to do with pipes between Windows apps and console apps).
-'
-'To do this in C++:
-'
-'// We will run php.exe as a child process after creating
-'// two pipes and attaching them to stdin and stdout
-'// of the child process
-'// Define sa struct such that child inherits our handles
-'
-'SECURITY_ATTRIBUTES sa = { sizeof(SECURITY_ATTRIBUTES) };
-'sa.bInheritHandle = TRUE;
-'sa.lpSecurityDescriptor = NULL;
-'
-'// Create the handles for our two pipes (two handles per pipe, one for each end)
-'// We will have one pipe for stdin, and one for stdout, each with a READ and WRITE end
-'HANDLE hStdoutRd, hStdoutWr, hStdinRd, hStdinWr;
-'
-'// Now create the pipes, and make them inheritable
-'CreatePipe (&hStdoutRd, &hStdoutWr, &sa, 0))
-'SetHandleInformation(hStdoutRd, HANDLE_FLAG_INHERIT, 0);
-'CreatePipe (&hStdinRd, &hStdinWr, &sa, 0)
-'SetHandleInformation(hStdinWr, HANDLE_FLAG_INHERIT, 0);
-'
-'// Now we have two pipes, we can create the process
-'// First, fill out the usage structs
-'STARTUPINFO si = { sizeof(STARTUPINFO) };
-'PROCESS_INFORMATION pi;
-'si.dwFlags = STARTF_USESTDHANDLES;
-'si.hStdOutput = hStdoutWr;
-'si.hStdInput  = hStdinRd;
-'
-'// And finally, create the process
-'CreateProcess (NULL, "c:\\php\\php-win.exe", NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
-'
-'// Close the handles we aren't using
-'CloseHandle(hStdoutWr);
-'CloseHandle(hStdinRd);
-'
-'// Now that we have the process running, we can start pushing PHP at it
-'WriteFile(hStdinWr, "<?php echo 'test'; ?>", 9, &dwWritten, NULL);
-'
-'// When we're done writing to stdin, we close that pipe
-'CloseHandle(hStdinWr);
-'
-'// Reading from stdout is only slightly more complicated
-'int i;
-'
-'std::string processed("");
-'char buf[128];
-'
-'while ( (ReadFile(hStdoutRd, buf, 128, &dwRead, NULL) && (dwRead != 0)) ) {
-'    for (i = 0; i < dwRead; i++)
-'        processed += buf[i];
-'}
-'
-'// Done reading, so close this handle too
-'CloseHandle(hStdoutRd);
-
-
-'    Dim cmdFile As String
     Dim cmdArgs As String
     Dim cmdCookie As String
     Dim cmdLine As String
@@ -724,70 +646,163 @@ Dim sPath As String
         If InStr(cmdFile, "/") Then
             sPath = Mid$(cmdFile, 1, InStrRev(cmdFile, "/") - 1)
         End If
-Dim Environs As String
-    Environs = Environs & "SCRIPT_FILENAME=" & cmdFile & ";;"
-    Environs = Environs & "GATEWAY_INTERFACE=CGI/1.1;;"
-    Environs = Environs & "QUERY_STRING=" & cmdArgs & ";;"
-    Environs = Environs & "REQUEST_METHOD=" & Method & ";;" 'GET OR POST
-    Environs = Environs & "REDIRECT_STATUS=true;;"
-    Environs = Environs & "SERVER_PROTOCOL=HTTP/1.1;;"
-    Environs = Environs & "REMOTE_ADDR=127.0.0.1;;"
-    Environs = Environs & "REMOTE_HOST=localhost;;"
-    Environs = Environs & "REMOTE_PORT=8080;;"
-    Environs = Environs & "SERVER_PORT=8080;;"
-    Environs = Environs & "REQUEST_URI=" & uri & ";;"
-    Environs = Environs & "HTTP_HOST=localhost:8080;;"
-    Environs = Environs & "HTTP_USER_AGENT=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Safari/537.36;;"
-    Environs = Environs & "DOCUMENT_ROOT=" & sPath & ";;"
-    Environs = Environs & "CONTEXT_DOCUMENT_ROOT=" & sPath & ";;"
-    Environs = Environs & "SERVER_SOFTWARE=Apache/2.4.27 (Win32) OpenSSL/1.1.0f PHP/7.0.16;;"
-    Environs = Environs & "SERVER_PROTOCOL=HTTP/1.1;;"
-    Environs = Environs & "SCRIPT_NAME=" & scriptname & ";;"
-    Environs = Environs & "PHP_SELF=" & scriptname & ";;"
-    Environs = Environs & "SERVER_NAME=localhost;;"
-    Environs = Environs & "HTTP_COOKIE=" & Header("Cookie") & ";;"
-    Environs = Environs & "REQUEST_SCHEME=http;;"
-        If Method = "POST" Then
-'            Environs = Environs & "CONTENT_TYPE=application/x-www-form-urlencoded;;"
-            Environs = Environs & "CONTENT_TYPE=" & Header("Content-type") & ";;"
-            Environs = Environs & "CONTENT_LENGTH=" & Len(rInfo.DataStr) & ";;"
-            Environs = Environs & "HTTP_ACCEPT=" & Header("Accept") & ";;"
-            Environs = Environs & "MAX_FILE_UPLOADS=10;;"
-            Environs = Environs & "PATH_INFO=" & sPath & "/" & ";;"
-        Else
-            Environs = Environs & "HTTP_ACCEPT=text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8;;"
-        
+
+Dim sHeader As String
+'Dim Environs As String
+'    Environs = Environs & "REDIRECT_STATUS=true;;"
+'    Environs = Environs & "HTTP_USER_AGENT=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Safari/537.36;;"
+'    Environs = Environs & "DOCUMENT_ROOT=" & sPath & ";;"
+'    Environs = Environs & "CONTEXT_DOCUMENT_ROOT=" & sPath & ";;"
+'    Environs = Environs & "SERVER_SOFTWARE=Apache/2.4.27 (Win32) OpenSSL/1.1.0f PHP/7.0.16;;"
+'    Environs = Environs & "SERVER_PROTOCOL=HTTP/1.1;;"
+'    Environs = Environs & "SCRIPT_NAME=" & scriptname & ";;"
+'    Environs = Environs & "PHP_SELF=" & scriptname & ";;"
+'    Environs = Environs & "SERVER_NAME=localhost;;"
+'    Environs = Environs & "HTTP_COOKIE=" & Header("Cookie") & ";;"
+'    Environs = Environs & "REQUEST_SCHEME=http;;"
+'        If Method = "POST" Then
+''            Environs = Environs & "CONTENT_TYPE=application/x-www-form-urlencoded;;"
+'            Environs = Environs & "CONTENT_TYPE=" & Header("Content-type") & ";;"
+'            Environs = Environs & "CONTENT_LENGTH=" & Len(rInfo.DataStr) & ";;"
+'            Environs = Environs & "HTTP_ACCEPT=" & Header("Accept") & ";;"
+'            Environs = Environs & "MAX_FILE_UPLOADS=10;;"
+'            Environs = Environs & "PATH_INFO=" & sPath & "/" & ";;"
+'        Else
+'            Environs = Environs & "HTTP_ACCEPT=text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8;;"
+'
+'        End If
+sHeader = sHeader & "GATEWAY_INTERFACE=FastCGI/1.0" & vbCrLf
+sHeader = sHeader & "SCRIPT_FILENAME=" & cmdFile & vbCrLf
+sHeader = sHeader & "QUERY_STRING=" & cmdArgs & vbCrLf
+sHeader = sHeader & "REQUEST_METHOD=" & Method & vbCrLf 'GET OR POST
+sHeader = sHeader & "SERVER_PROTOCOL=HTTP/1.1" & vbCrLf
+sHeader = sHeader & "REMOTE_HOST=localhost" & vbCrLf
+sHeader = sHeader & "REMOTE_ADDR=127.0.0.1" & vbCrLf
+sHeader = sHeader & "REMOTE_PORT=8080" & vbCrLf
+sHeader = sHeader & "SERVER_PORT=8080" & vbCrLf
+sHeader = sHeader & "HTTP_HOST=localhost:8080" & vbCrLf
+sHeader = sHeader & "REQUEST_URI=" & uri & vbCrLf
+sHeader = sHeader & "SCRIPT_NAME=/web/laravel-5.4.23/public/index.php" & vbCrLf
+sHeader = sHeader & "DOCUMENT_URI=/web/laravel-5.4.23/public/index.php" & vbCrLf
+sHeader = sHeader & "SERVER_SOFTWARE=nginx/1.16.0" & vbCrLf
+sHeader = sHeader & "SERVER_ADDR=127.0.0.1" & vbCrLf
+sHeader = sHeader & "SERVER_NAME=localhost" & vbCrLf
+sHeader = sHeader & "CONTENT_TYPE=" & vbCrLf
+sHeader = sHeader & "CONTENT_LENGTH=0" & vbCrLf
+
+Dim request  As String, paramsRequest As String, nvpair() As String, C As Long, nv() As String, resp As String
+Dim stdin As String
+ 
+Dim id As Long, keepAlive As Long
+            Randomize
+        id = Random2(1, RShift(1, 16) - 1)
+'        // Using persistent sockets implies you want them keept alive by server!
+        keepAlive = 1 'true
+request = Chr(0) & Chr(FCGI_Consts.RESPONDER) & Chr(keepAlive) & String$(5, Chr(0))
+request = buildPacket(FCGI_Consts.BEGIN_REQUEST, request, id)
+paramsRequest = ""
+nvpair = Split(sHeader, vbCrLf)
+For C = 0 To UBound(nvpair) - 1
+        nv = Split(nvpair(C), "=")
+        paramsRequest = paramsRequest & buildNvpair(nv(0), nv(1))
+Next
+ 
+        If (paramsRequest <> "") Then
+            request = request & buildPacket(FCGI_Consts.PARAMS, paramsRequest, id)
         End If
-''    cmdLine = "php-cgi.exe -q " + Chr(34) + cmdFile + Chr(34) + "  " & cmdArgs + cmdCookie
-    
-'    cmdLine = "php-win.exe " + Chr(34) + cmdFile + Chr(34) + "  " & cmdArgs + cmdCookie
-'    cmdLine = "php.exe " + Chr(34) + cmdFile + Chr(34) + " -- " + cmdArgs + cmdCookie
-'Process_PHP = Dos.ExecuteCommand(cmdLine, Environs, sPath)
-'Process_PHP = Dos.ExecuteCGI(" -d max_file_uploads=10", Environs, rInfo.DataStr)
-'Process_PHP = Dos.ExecuteCGI(" -c E:\Ampps\php-5.6\php.ini", Environs, rInfo.DataStr)
-'Process_PHP = Dos.ExecuteCGI("", Environs, rInfo.DataStr)
+        request = request & buildPacket(FCGI_Consts.PARAMS, "", id)
+
+        If (stdin <> "") Then
+            request = request & buildPacket(FCGI_Consts.stdin, stdin, id)
+        End If
+        request = request & buildPacket(FCGI_Consts.stdin, "", id)
+        
+ 
+'request = "GET / HTTP/1.0" & vbCrLf & _
+'    "Host: www.bgdev.org" & vbCrLf & _
+'    "Connection: close" & vbCrLf & vbCrLf
+'request = "З         З�  GATEWAY_INTERFACEFastCGI/1.0REQUEST_METHODGETLSCRIPT_FILENAMEF:\NGINX_PHP_MYSQL\nginx-1.16.0_run/www/web/laravel-5.4.23/console/index.php%SCRIPT_NAME/web/laravel-5.4.23/console/index.php QUERY_STRINGREQUEST_URI/web/laravel-5.4.23/console/%DOCUMENT_URI/web/laravel-5.4.23/console/index.phpSERVER_SOFTWAREnginx/1.16.0    REMOTE_ADDR127.0.0.1REMOTE_PORT9985  SERVER_ADDR127.0.0.1SERVER_PORT80    SERVER_NAMElocalhostSERVER_PROTOCOLHTTP/1.1 CONTENT_TYPECONTENT_LENGTH0З    З    "
+'        If Not csocket.SyncSendText(request, Timeout:=LNG_TIMEOUT) Then
+'            GoTo QH
+'        End If
+Dim b As Boolean
+'    b = csocket.SyncWaitForEvent(5000, ucsSfdAll)
+'
+'        resp = csocket.SyncReceiveText(10000, Timeout:=LNG_TIMEOUT)
+'                    FCGIPacketHeader.content = ""
+'
+'       Do
+'            Exit Do
+'             resp = readPacket(csocket)
+'
+'            If (FCGIPacketHeader.type = FCGI_Consts.StdOut Or FCGIPacketHeader.type = FCGI_Consts.StdErr) Then
+''                if ($resp['type'] == self::STDERR) {
+''                    $this->_requests[$resp['requestId']]['state'] = self::REQ_STATE_ERR;
+''                }
+''                $this->_requests[$resp['requestId']]['response'] .= $resp['content'];
+'            End If
+'            If (FCGIPacketHeader.type = FCGI_Consts.END_REQUEST) Then
+''                $this->_requests[$resp['requestId']]['state'] = self::REQ_STATE_OK;
+''                if ($resp['requestId'] == $requestId) {
+''                    break;
+''                }
+'                Exit Do
+'            End If
+''            if (microtime(true) - $startTime >= ($timeoutMs * 1000)) {
+''                // Reset
+''                $this->set_ms_timeout($this->_readWriteTimeout);
+''                throw new \Exception('Timed out');
+''            }
+'         Loop While (FCGIPacketHeader.contentLength > 0)
+'
+''        if (!is_array($resp)) {
+''            $info = stream_get_meta_data($this->_sock);
+''
+''            // We must reset timeout but it must be AFTER we get info
+''            $this->set_ms_timeout($this->_readWriteTimeout);
+''
+''            if ($info['timed_out']) {
+''                throw new TimedOutException('Read timed out');
+''            }
+''
+''            if ($info['unread_bytes'] == 0
+''                    && $info['blocked']
+''                    && $info['eof']) {
+''                throw new ForbiddenException('Not in white list. Check listen.allowed_clients.');
+''            }
+''
+''            throw new \Exception('Read failed');
+''        }
+''
+''        // Reset timeout
+''        $this->set_ms_timeout($this->_readWriteTimeout);
+'
+''        switch (ord($resp['content']{4})) {
+''            Case self:: CANT_MPX_CONN:
+''                throw new \Exception('This app can\'t multiplex [CANT_MPX_CONN]');
+''                break;
+''            Case self:: OVERLOADED:
+''                throw new \Exception('New request rejected; too busy [OVERLOADED]');
+''                break;
+''            Case self:: UNKNOWN_ROLE:
+''                throw new \Exception('Role value not known [UNKNOWN_ROLE]');
+''                break;
+''            Case self:: REQUEST_COMPLETE:
+''                return $this->_requests[$requestId]['response'];
+''        }
+'
+'            csocket.Close_
+If php_cgi_client Is Nothing Then
+    Set php_cgi_client = New cWinsock
+End If
+    php_cgi_client.CloseAll
+            Header_Received = False
+FCGIPacketHeader.content = request
+FCGIPacketHeader.response = ""
+Header_Received = False
+        php_cgi_client.Connect "127.0.0.1", 9000
 End Function
 Private Sub cServer_DataArrival(ByVal lngSocket As Long)
-'Dim strData As String
-'
-'   'Recieve data on the server socket
-'    cServer.Recv lngSocket, strData
-''MsgBox strData
-'        Dim sData As String
-'        sData = "HTTP/1.0 200 OK" & vbNewLine & _
-'                "Server: Test" & vbNewLine & _
-'                "Content-Length: 2" & vbNewLine & vbNewLine & _
-'                "hi"
-'
-'
-'    If cServer.LastAcceptedSocket <> 0 Then
-'         cServer.Send lngSocket, sData
-'    End If
-'
-'    Caption = "cServer_DataArrival " & lngSocket
-'
-'            Text1.Text = strData
-            
     Dim rData As String, sHeader As String, RequestedFile As String, ContentType As String
     Dim CompletePath As String, RequestVars As String
     Dim RequestHeader As String, RequestData As String
@@ -939,16 +954,10 @@ cServer.Recv lngSocket, rData
                     rInfo.TotalLength = Len(sHeader) + Len(rInfo.DataStr)
                 Else
                     ' requested file exists, open the file, send header, and start the transfer
-                    
-                    ' display on the label the file name of currect transfer
-                    
-'                    lblFileProgress(Index).Caption = Right("00" & Index, 2) & " Transfering: " & RequestedFile
                     rInfo.FileName = RequestedFile
-                    
                     ' since one or more files may be opened at the same time, have to get the free file number
                     rInfo.FileNum = FreeFile
                     Open CompletePath For Binary Access Read As rInfo.FileNum
-                         
                     ' get content-type depending on the file extension
 '                        Ext = LCase(LeftRight(RequestedFile, ".", , 1))
                         Ext = LCase$(Mid$(RequestedFile, InStrRev(RequestedFile, ".") + 1))
@@ -1010,15 +1019,12 @@ cServer.Recv lngSocket, rData
                                 vbNewLine & vbNewLine
                     End If
                 End If
-                
                 ' send the header, the Sck_SendComplete event is gonna send the file...
-'                Sck(Index).SendData sHeader
                 cServer.Send lngSocket, sHeader & rInfo.DataStr
             Else
                 ' send "Not Found" if file does not exsist on the share
                 sHeader = "HTTP/1.0 404 Not Found" & vbNewLine & "Server: " & ServerName & vbNewLine & vbNewLine
                 rInfo.TotalLength = Len(sHeader)
-'                Sck(Index).SendData sHeader
                 cServer.Send lngSocket, sHeader
             End If
         End If
@@ -1044,11 +1050,6 @@ cServer.Recv lngSocket, rData
             ' sometimes the browser makes "HEAD" requests (but it's not inplemented in this project)
             sHeader = "HTTP/1.0 501 Not Implemented" & vbNewLine & "Server: " & ServerName & vbNewLine & vbNewLine
             rInfo.TotalLength = Len(sHeader)
-'           If Sck(Index).State = 0 Then
-'                Sck_Close Index
-'                Exit Sub
-'            End If
-'            Sck(Index).SendData sHeader
             cServer.Send lngSocket, sHeader
         End If
     End If
@@ -1060,8 +1061,6 @@ End Sub
 
 Private Sub cServer_SendProgress(ByVal lngSocket As Long, ByVal bytesSent As Long, ByVal bytesRemaining As Long)
     Caption = "cServer_SendProgress " & lngSocket & " bytesSent " & bytesSent & " bytesRemaining " & bytesRemaining
-''If bytesRemaining = 0 And cServer.LastAcceptedSocket <> 0 And bytesSent <> 0 Then
-''End If
 End Sub
 Private Sub Form_Unload(Cancel As Integer)
     If Not php_cgi_client Is Nothing Then
