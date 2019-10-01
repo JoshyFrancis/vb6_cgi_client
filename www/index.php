@@ -48,7 +48,7 @@ print "<img src=\"php_fcgi_big.png\"  ><h1>VB6 FCGI Test</h1>";
 		//print_r($_SERVER);
 		
 				
-		$url=(isSSL()?'https://': 'http://') . $_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
+		$url=(isSSL()?'https://': 'http://') . $_SERVER['HTTP_HOST'].(isset($_SERVER['SERVER_PORT'])?':'.$_SERVER['SERVER_PORT']:'').$_SERVER['REQUEST_URI'];
 		$url=str_replace('?'.$_SERVER['QUERY_STRING'],'',$url);
 		echo $_SERVER['REQUEST_URI'];
 		echo "<br>";
