@@ -15,48 +15,44 @@
 		echo  __DIR__;
 	echo "<br>";
 			//ini_set('max_file_uploads','10');
-			
-				
-				
+
 			if( isset($_REQUEST['route']) &&  $_REQUEST['route']=='fileupload'){
-						var_dump($_FILES);
-					
-					$uploads_dir = 'uploads';
-					foreach ($_FILES["userfile"]["error"] as $key => $error) {
-						if ($error == UPLOAD_ERR_OK) {
-							$tmp_name = $_FILES["userfile"]["tmp_name"][$key];
-							// basename() may prevent filesystem traversal attacks;
-							// further validation/sanitation of the filename may be appropriate
-							$name = basename($_FILES["userfile"]["name"][$key]);
-							move_uploaded_file($tmp_name, "$uploads_dir/$name");
-						}
-					}	 
-				}
+					var_dump($_FILES);
+				
+				$uploads_dir = 'uploads';
+				foreach ($_FILES["userfile"]["error"] as $key => $error) {
+					if ($error == UPLOAD_ERR_OK) {
+						$tmp_name = $_FILES["userfile"]["tmp_name"][$key];
+						// basename() may prevent filesystem traversal attacks;
+						// further validation/sanitation of the filename may be appropriate
+						$name = basename($_FILES["userfile"]["name"][$key]);
+						move_uploaded_file($tmp_name, "$uploads_dir/$name");
+					}
+				}	 
+			}
 
 	
 	
 	var_dump($_POST);
-	echo '<br>';
-	echo '<pre>';
-		var_dump($_SERVER);
-	echo '</pre>';
 	echo '<br>';
 				
 	echo "<br>";
 	echo "hi\r\n";
 	echo "<br>";
 
-print "<img src=\"php_fcgi_big.png\" width=100 height=100><h1>This Site is hosted on Hyper X 5.0</h1>";
+print "<img src=\"php_fcgi_big.png\"  ><h1>VB6 FCGI Test</h1>";
 
 				function isSSL() { return (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443; }
 		//$url=$_SERVER['REQUEST_URI'];
 		//$url=$_SERVER['QUERY_STRING'];
 		//print_r($_SERVER);
 		
-		//echo $_SERVER['REQUEST_URI'];		
+				
 		$url=(isSSL()?'https://': 'http://') . $_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
 		$url=str_replace('?'.$_SERVER['QUERY_STRING'],'',$url);
-			
+		echo $_SERVER['REQUEST_URI'];
+		echo "<br>";
+	
 				
 ?>
 If you can see the large text and image above then php works!!!.
@@ -77,5 +73,12 @@ If you can see the large text and image above then php works!!!.
             
         <input type="submit"  value="submit" />
    </form>
+   <?php
+			echo '<br>';
+	echo '<pre>';
+		var_dump($_SERVER);
+	echo '</pre>';
+
+   ?>
 </body>
 </html>

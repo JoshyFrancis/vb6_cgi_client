@@ -454,7 +454,14 @@ Dim Ext As String
         Next
 
     End If
+                If Right$(rInfo.FileName, 1) = "/" Then
+                    If IsFile(Replace$(PathShared & "/" & rInfo.FileName, "/", "\") & "index.php") = True Then
+                        rInfo.FileName = PathShared & Replace$(rInfo.FileName, "/", "\") & "index.php"
+                    End If
+                End If
+
 Ext = LCase$(Mid$(rInfo.FileName, InStrRev(rInfo.FileName, ".") + 1))
+        
     If Ext = "php" Then
         ResponseData = Process_PHP(lngSocket, rInfo.FileName & "?" & rInfo.RequestVars, "POST")
     End If
@@ -615,11 +622,12 @@ End If
  
 End Sub
 Function Process_PHP(ByVal lngSocket As Long, ByVal cmdFile As String, ByVal Method As String) As String
-    Dim cmdArgs As String
-    Dim cmdCookie As String
-    Dim cmdLine As String
-    Dim phpOut As String
-          
+Dim cmdArgs As String
+Dim cmdCookie As String
+Dim cmdLine As String
+Dim phpOut As String
+Dim t_pathsahred As String
+    t_pathsahred = Replace$(PathShared, "\", "/")
 If InStr(cmdFile, "?") Then
 '    cmdArgs = Mid$(cmdFile, InStrRev(cmdFile, "?") + 1)
 '    cmdFile = Mid$(cmdFile, 1, InStrRev(cmdFile, "?") - 1)
@@ -628,7 +636,7 @@ If InStr(cmdFile, "?") Then
 End If
 Dim uri As String, scriptname As String
     cmdFile = URLdecode(Replace$(cmdFile, "\", "/"))
-        uri = Replace$(cmdFile, "\", "/")
+        uri = Replace$(Replace$(cmdFile, t_pathsahred, ""), "\", "/")
     scriptname = uri
             If LCase$(Right$(uri, 9)) = "index.php" Then
                 uri = Mid$(uri, 1, Len(uri) - 9)
@@ -650,10 +658,11 @@ Dim sPath As String
             sPath = Mid$(cmdFile, 1, InStrRev(cmdFile, "/") - 1)
         End If
 Dim doc_uri As String
-    If InStr(cmdFile, uri) Then
-        doc_uri = uri & Mid$(cmdFile, InStr(cmdFile, uri) + Len(uri))
-    End If
 
+        doc_uri = Replace$(cmdFile, sPath, "")
+         If cmdArgs <> "" Then
+                doc_uri = doc_uri & "?" & cmdArgs
+        End If
 Dim sHeader As String
 sHeader = sHeader & "GATEWAY_INTERFACE=FastCGI/1.0" & vbCrLf
 sHeader = sHeader & "SCRIPT_FILENAME=" & cmdFile & vbCrLf
