@@ -1272,7 +1272,7 @@ Do
         If FCGIPacketHeader.contentLength > 0 Then
                 BufLen = FCGIPacketHeader.contentLength
                 Do While BufLen <> 0
-                        DoEvents
+'                        DoEvents
                     buf = ""
                     bytes_received = php_cgi_client.Recv(lngSocket, buf, BufLen)
                      If bytes_received <> -1 Then
@@ -1286,7 +1286,7 @@ Do
         If FCGIPacketHeader.paddingLength > 0 Then
                 BufLen = FCGIPacketHeader.paddingLength
                   Do While BufLen <> 0
-                        DoEvents
+'                        DoEvents
                     buf = ""
                     bytes_received = php_cgi_client.Recv(lngSocket, buf, BufLen)
                     If bytes_received <> -1 Then
@@ -1300,17 +1300,17 @@ Do
                  FCGIPacketHeader.response = FCGIPacketHeader.response & FCGIPacketHeader.content
            End If
             If (FCGIPacketHeader.type = FCGI_Consts.END_REQUEST) Then
-'                    Text1.Text = FCGIPacketHeader.response
-                        php_cgi_client.CloseAll
-'                 Open App.Path & "\fcgi_repsonse.txt" For Output As 1
-'                    Print #1, FCGIPacketHeader.response
-'                Close 1
+'                        php_cgi_client.CloseAll
+                 Open App.Path & "\fcgi_repsonse.txt" For Output As 1
+                    Print #1, FCGIPacketHeader.response
+                Close 1
                 Exit Do
             End If
 Loop While Len(packet) <> 0
+                        php_cgi_client.CloseAll
     FCGI_Content_Received = True
                 Dim sHeader As String, phpHeaders As String
-                Close rInfo.FileNum
+'                Close rInfo.FileNum
                     
                 rInfo.DataStr = FCGIPacketHeader.response
                 If rInfo.DataStr <> "" And InStr(rInfo.DataStr, vbCrLf & vbCrLf) Then
