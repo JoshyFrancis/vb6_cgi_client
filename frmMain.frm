@@ -659,12 +659,11 @@ Dim sPath As String
         End If
 Dim doc_uri As String
 
-        doc_uri = Replace$(cmdFile, sPath, "")
-         If cmdArgs <> "" Then
-                doc_uri = doc_uri & "?" & cmdArgs
-        End If
+        doc_uri = Replace$(Replace$(uri, "?" & cmdArgs, "") & Replace$(cmdFile, sPath, ""), "//", "/")
+
 Dim sHeader As String
-sHeader = sHeader & "GATEWAY_INTERFACE=FastCGI/1.0" & vbCrLf
+'sHeader = sHeader & "GATEWAY_INTERFACE=FastCGI/1.0" & vbCrLf
+sHeader = sHeader & "GATEWAY_INTERFACE=CGI/1.1" & vbCrLf
 sHeader = sHeader & "SCRIPT_FILENAME=" & cmdFile & vbCrLf
 sHeader = sHeader & "QUERY_STRING=" & cmdArgs & vbCrLf
 sHeader = sHeader & "REQUEST_METHOD=" & Method & vbCrLf 'GET OR POST
@@ -687,7 +686,6 @@ sHeader = sHeader & "SERVER_SOFTWARE=nginx/1.16.0" & vbCrLf
 sHeader = sHeader & "SERVER_PROTOCOL=HTTP/1.1" & vbCrLf
 sHeader = sHeader & "SERVER_NAME=localhost" & vbCrLf
 sHeader = sHeader & "SERVER_ADDR=127.0.0.1" & vbCrLf
-sHeader = sHeader & "REDIRECT_STATUS=true" & vbCrLf
         If Method = "POST" Then
 '            sHeader = sHeader & "CONTENT_TYPE=application/x-www-form-urlencoded" & vbCrLf
             sHeader = sHeader & "CONTENT_TYPE=" & Header("Content-type") & vbCrLf
@@ -695,12 +693,16 @@ sHeader = sHeader & "REDIRECT_STATUS=true" & vbCrLf
             sHeader = sHeader & "HTTP_ACCEPT=" & Header("Accept") & vbCrLf
             sHeader = sHeader & "MAX_FILE_UPLOADS=10" & vbCrLf
             sHeader = sHeader & "PATH_INFO=" & sPath & "/" & vbCrLf
+            sHeader = sHeader & "REDIRECT_STATUS=200" & vbCrLf
         Else
             sHeader = sHeader & "CONTENT_TYPE=" & vbCrLf
-            sHeader = sHeader & "CONTENT_LENGTH=0" & vbCrLf
+            sHeader = sHeader & "CONTENT_LENGTH=" & vbCrLf
             sHeader = sHeader & "HTTP_ACCEPT=text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" & vbCrLf
+            sHeader = sHeader & "REDIRECT_STATUS=true" & vbCrLf
 
         End If
+sHeader = sHeader & "FCGI_ROLE=RESPONDER" & vbCrLf
+
 Dim request  As String, paramsRequest As String, nvpair() As String, C As Long, nv() As String, resp As String
 Dim stdin As String
  
@@ -715,7 +717,12 @@ request = buildPacket(FCGI_Consts.BEGIN_REQUEST, request, id)
 paramsRequest = ""
 nvpair = Split(sHeader, vbCrLf)
 For C = 0 To UBound(nvpair) - 1
-        nv = Split(nvpair(C), "=")
+'        nv = Split(nvpair(C), "=")
+        nv = Split("=", "=")
+            If InStr(nvpair(C), "=") Then
+                nv(0) = Mid$(nvpair(C), 1, InStr(nvpair(C), "=") - 1)
+                nv(1) = Mid$(nvpair(C), InStr(nvpair(C), "=") + 1)
+            End If
         paramsRequest = paramsRequest & buildNvpair(nv(0), nv(1))
 Next
  
@@ -884,14 +891,18 @@ cServer.Recv lngSocket, rData
                     
                     rInfo.DataStr = BuildHTMLDirList(PathShared, RequestedFile)
                     rInfo.FileNum = -1
-                    
-                    ' build the header
-                    sHeader = "HTTP/1.0 200 OK" & vbNewLine & _
-                            "Server: " & ServerName & vbNewLine & _
-                            "Content-Type: text/html" & vbNewLine & _
-                            "Content-Length: " & Len(rInfo.DataStr) & vbNewLine & _
-                            vbNewLine
-                    
+                    If rInfo.DataStr = "" Then
+                        sHeader = "HTTP/1.0 404 Not Found" & vbNewLine & "Server: " & ServerName & vbNewLine & vbNewLine
+                         cServer.Send lngSocket, sHeader
+                         Exit Sub
+                   Else
+                        ' build the header
+                        sHeader = "HTTP/1.0 200 OK" & vbNewLine & _
+                                "Server: " & ServerName & vbNewLine & _
+                                "Content-Type: text/html" & vbNewLine & _
+                                "Content-Length: " & Len(rInfo.DataStr) & vbNewLine & _
+                                vbNewLine
+                    End If
                     ' total data send is the header length + the length of the file requested
                     rInfo.TotalLength = Len(sHeader) + Len(rInfo.DataStr)
                 Else
@@ -1012,8 +1023,7 @@ Private Sub Form_DblClick()
 End Sub
 
 Private Sub Form_Load()
-     
-        PathShared = App.Path & "\www"
+'        PathShared = App.Path & "\www"
 End Sub
 
 Private Sub Form_Unload(Cancel As Integer)
@@ -1093,7 +1103,9 @@ Private Function BuildHTMLDirList(ByVal Root As String, ByVal DirToList As Strin
     End If
     
     If Dirs.Count = 0 And Files.Count = 0 Then
-        HTML = HTML & "This folder is empty."
+'        HTML = HTML & "This folder is empty."
+        HTML = ""
+        Exit Function
     End If
     
     BuildHTMLDirList = HTML & "</body></html>"
