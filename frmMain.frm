@@ -673,7 +673,6 @@ sHeader = sHeader & "SCRIPT_NAME=" & scriptname & vbCrLf
 sHeader = sHeader & "PHP_SELF=" & scriptname & vbCrLf
 sHeader = sHeader & "HTTP_COOKIE=" & Header("Cookie") & vbCrLf
 sHeader = sHeader & "DOCUMENT_ROOT=" & sPath & vbCrLf
-sHeader = sHeader & "CONTEXT_DOCUMENT_ROOT=" & sPath & vbCrLf
 sHeader = sHeader & "HTTP_HOST=localhost:8080" & vbCrLf
 sHeader = sHeader & "HTTP_USER_AGENT=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Safari/537.36" & vbCrLf
 sHeader = sHeader & "REQUEST_SCHEME=http" & vbCrLf
