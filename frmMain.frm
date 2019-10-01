@@ -411,14 +411,15 @@ Public Function URLencshort(ByRef Text As String) As String
         URLencshort = URLencshort & strChar
     Next lngA
 End Function
-Function Header(ByVal Key As String) As String
+Function Header(ByVal Key As String, Optional ByVal sDefault As String = "") As String
 Dim C As Long
     For C = 0 To UBound(rInfo.Headers)
         If InStr(LCase$(rInfo.Headers(C)), LCase$(Key) & ":") Then
                 Header = Trim$(Split(rInfo.Headers(C), ":")(1))
-            Exit For
+            Exit Function
         End If
     Next
+        Header = sDefault
 End Function
 Function request(ByVal Key As String) As String
 Dim C As Long
@@ -447,9 +448,9 @@ Dim Ext As String
                 sFile = App.Path & "\uploads\" & sFile
                 f = FreeFile
 
-                Open sFile For Binary Access Write As f
-                    Put #f, , RequestVars(C).Value
-                Close f
+'                Open sFile For Binary Access Write As f
+'                    Put #f, , RequestVars(C).Value
+'                Close f
             End If
         Next
 
@@ -658,12 +659,11 @@ Dim sPath As String
             sPath = Mid$(cmdFile, 1, InStrRev(cmdFile, "/") - 1)
         End If
 Dim doc_uri As String
-
         doc_uri = Replace$(Replace$(uri, "?" & cmdArgs, "") & Replace$(cmdFile, sPath, ""), "//", "/")
 
 Dim sHeader As String
-'sHeader = sHeader & "GATEWAY_INTERFACE=FastCGI/1.0" & vbCrLf
-sHeader = sHeader & "GATEWAY_INTERFACE=CGI/1.1" & vbCrLf
+sHeader = sHeader & "GATEWAY_INTERFACE=FastCGI/1.0" & vbCrLf
+'sHeader = sHeader & "GATEWAY_INTERFACE=CGI/1.1" & vbCrLf
 sHeader = sHeader & "SCRIPT_FILENAME=" & cmdFile & vbCrLf
 sHeader = sHeader & "QUERY_STRING=" & cmdArgs & vbCrLf
 sHeader = sHeader & "REQUEST_METHOD=" & Method & vbCrLf 'GET OR POST
@@ -673,7 +673,7 @@ sHeader = sHeader & "SCRIPT_NAME=" & scriptname & vbCrLf
 sHeader = sHeader & "PHP_SELF=" & scriptname & vbCrLf
 sHeader = sHeader & "HTTP_COOKIE=" & Header("Cookie") & vbCrLf
 sHeader = sHeader & "DOCUMENT_ROOT=" & sPath & vbCrLf
-sHeader = sHeader & "HTTP_HOST=localhost:8080" & vbCrLf
+'sHeader = sHeader & "HTTP_HOST=localhost:8080" & vbCrLf
 sHeader = sHeader & "HTTP_USER_AGENT=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Safari/537.36" & vbCrLf
 sHeader = sHeader & "REQUEST_SCHEME=http" & vbCrLf
 sHeader = sHeader & "REMOTE_HOST=localhost" & vbCrLf
@@ -689,18 +689,24 @@ sHeader = sHeader & "SERVER_ADDR=127.0.0.1" & vbCrLf
 '            sHeader = sHeader & "CONTENT_TYPE=application/x-www-form-urlencoded" & vbCrLf
             sHeader = sHeader & "CONTENT_TYPE=" & Header("Content-type") & vbCrLf
             sHeader = sHeader & "CONTENT_LENGTH=" & Len(rInfo.DataStr) & vbCrLf
-            sHeader = sHeader & "HTTP_ACCEPT=" & Header("Accept") & vbCrLf
+'            sHeader = sHeader & "HTTP_ACCEPT=" & Header("Accept") & vbCrLf
             sHeader = sHeader & "MAX_FILE_UPLOADS=10" & vbCrLf
             sHeader = sHeader & "PATH_INFO=" & sPath & "/" & vbCrLf
             sHeader = sHeader & "REDIRECT_STATUS=200" & vbCrLf
         Else
             sHeader = sHeader & "CONTENT_TYPE=" & vbCrLf
             sHeader = sHeader & "CONTENT_LENGTH=" & vbCrLf
-            sHeader = sHeader & "HTTP_ACCEPT=text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" & vbCrLf
+'            sHeader = sHeader & "HTTP_ACCEPT=text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" & vbCrLf
             sHeader = sHeader & "REDIRECT_STATUS=true" & vbCrLf
 
         End If
 sHeader = sHeader & "FCGI_ROLE=RESPONDER" & vbCrLf
+sHeader = sHeader & "HTTP_ACCEPT=" & Header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8") & vbCrLf
+sHeader = sHeader & "HTTP_REFERER=" & Header("Referer") & vbCrLf
+sHeader = sHeader & "HTTP_ORIGIN=" & Header("Origin") & vbCrLf
+sHeader = sHeader & "HTTP_UPGRADE_INSECURE_REQUESTS=" & Header("Upgrade-Insecure-Requests") & vbCrLf
+sHeader = sHeader & "HTTP_CONNECTION=" & Header("Connection") & vbCrLf
+sHeader = sHeader & "HTTP_HOST=" & Header("Host", "localhost:8080") & vbCrLf
 
 Dim request  As String, paramsRequest As String, nvpair() As String, C As Long, nv() As String, resp As String
 Dim stdin As String
