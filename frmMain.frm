@@ -64,7 +64,7 @@ Private Const ServerName As String = "Web Server Version 1.0.0"
 
 ' this project was designed for only one share
 ' change the path to the directory you want to share
-Private Const PathShared As String = "" 'App.Path can change accordingly
+Private PathShared As String   '= "www"
 
 Private Type ConnectionInfo
     FileNum As Integer  ' file number of the file opened on the current connection
@@ -649,12 +649,12 @@ Dim sPath As String
         If InStr(cmdFile, "/") Then
             sPath = Mid$(cmdFile, 1, InStrRev(cmdFile, "/") - 1)
         End If
-
-Dim sHeader As String
 Dim doc_uri As String
     If InStr(cmdFile, uri) Then
         doc_uri = uri & Mid$(cmdFile, InStr(cmdFile, uri) + Len(uri))
     End If
+
+Dim sHeader As String
 sHeader = sHeader & "GATEWAY_INTERFACE=FastCGI/1.0" & vbCrLf
 sHeader = sHeader & "SCRIPT_FILENAME=" & cmdFile & vbCrLf
 sHeader = sHeader & "QUERY_STRING=" & cmdArgs & vbCrLf
@@ -995,6 +995,17 @@ End Sub
 Private Sub cServer_SendProgress(ByVal lngSocket As Long, ByVal bytesSent As Long, ByVal bytesRemaining As Long)
     Caption = "cServer_SendProgress " & lngSocket & " bytesSent " & bytesSent & " bytesRemaining " & bytesRemaining
 End Sub
+
+Private Sub Form_DblClick()
+    Process_PHP 0, App.Path & "/www/index.php", "GET"
+    
+End Sub
+
+Private Sub Form_Load()
+     
+        PathShared = App.Path & "\www"
+End Sub
+
 Private Sub Form_Unload(Cancel As Integer)
     If Not php_cgi_client Is Nothing Then
         php_cgi_client.CloseAll
@@ -1013,13 +1024,11 @@ Private Function BuildHTMLDirList(ByVal Root As String, ByVal DirToList As Strin
     
     Root = Replace(Root, "/", "\")
     DirToList = Replace(DirToList, "/", "\")
-    
     If Right(Root, 1) <> "\" Then Root = Root & "\"
     If Left(DirToList, 1) = "\" Then DirToList = Mid(DirToList, 2)
     If Right(DirToList, 1) <> "\" Then DirToList = DirToList & "\"
     
     DirToList = Replace(DirToList, "%20", " ")
-    
     If IsDir(Root & DirToList) = True Then
         sDir = Dir(Replace(Root & DirToList, "\\", "\") & "*.*", vbArchive + vbDirectory + vbReadOnly)
         
@@ -1331,8 +1340,9 @@ Loop While Len(packet) <> 0
                         "Content-Length: " & Len(rInfo.DataStr) & _
                           vbNewLine & phpHeaders & _
                         vbNewLine & vbNewLine
-             
+If FCGIPacketHeader.lngSocket <> 0 Then
             cServer.Send FCGIPacketHeader.lngSocket, sHeader & rInfo.DataStr
+End If
 End Sub
 Private Sub php_cgi_client_OnClose(ByVal lngSocket As Long)
     FCGI_Content_Received = True
@@ -1348,8 +1358,14 @@ Private Sub php_cgi_client_OnConnect(ByVal lngSocket As Long)
 End Sub
 
 Private Sub php_cgi_client_OnError(ByVal lngRetCode As Long, ByVal strDescription As String)
-    FCGI_Content_Received = True
+                         php_cgi_client.CloseAll
+   FCGI_Content_Received = True
 Caption = "php_cgi_client_OnError " & strDescription
+Dim sHeader As String
+                sHeader = "HTTP/1.0 404 Not Found" & vbNewLine & "Server: " & ServerName & vbNewLine & vbNewLine
+    If FCGIPacketHeader.lngSocket <> 0 Then
+                cServer.Send FCGIPacketHeader.lngSocket, sHeader
+    End If
 End Sub
 
 Private Sub php_cgi_client_SendProgress(ByVal lngSocket As Long, ByVal bytesSent As Long, ByVal bytesRemaining As Long)

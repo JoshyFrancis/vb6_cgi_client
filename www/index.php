@@ -37,8 +37,10 @@
 	
 	var_dump($_POST);
 	echo '<br>';
-	var_dump($_SERVER);
-				echo '<br>';
+	echo '<pre>';
+		var_dump($_SERVER);
+	echo '</pre>';
+	echo '<br>';
 				
 	echo "<br>";
 	echo "hi\r\n";
