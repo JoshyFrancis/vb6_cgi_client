@@ -91,6 +91,8 @@ Attribute cServer.VB_VarHelpID = -1
 Private WithEvents php_cgi_client  As cWinsock
 Attribute php_cgi_client.VB_VarHelpID = -1
 Private rInfo As ConnectionInfo
+Private last_path As String
+
 Dim FCGI_Content_Received As Boolean
 Private Enum FCGI_Consts
      VERSION_1 = 1
@@ -761,7 +763,7 @@ Private Sub cServer_DataArrival(ByVal lngSocket As Long)
     Dim CompletePath As String, RequestVars As String
     Dim RequestHeader As String, RequestData As String
     Dim Headers() As String, Header() As String, C As Long, boundary As String
-    Dim Ext As String
+    Dim FileName As String, Ext As String
     
 cServer.Recv lngSocket, rData
             
@@ -868,7 +870,6 @@ cServer.Recv lngSocket, rData
                     RequestVars = Mid$(RequestedFile, InStrRev(RequestedFile, "public/") + 7) & "?" & RequestVars
                     RequestedFile = Mid$(RequestedFile, 1, InStrRev(RequestedFile, "public/") + 6) & "index.php"
                 End If
-                    
                 rInfo.RequestVars = RequestVars
                 rInfo.FileName = RequestedFile
                 rInfo.sType = "GET"
@@ -886,30 +887,34 @@ cServer.Recv lngSocket, rData
         Else
             CompletePath = Replace(PathShared & Replace(RequestedFile, "/", "\"), "\\", "\")
             CompletePath = Replace(CompletePath, "%20", " ")
+                    FileName = Mid$(CompletePath, InStrRev(CompletePath, "\") + 1)
+                    If IsFile(last_path & FileName) Then
+                        CompletePath = last_path & FileName
+                    End If
 '            Debug.Print CompletePath
-            
 '            If Dir(CompletePath, vbArchive + vbReadOnly + vbDirectory) <> "" Then
              If IsDir(CompletePath) Or IsFile(CompletePath) Then
+                    last_path = Mid$(CompletePath, 1, InStrRev(CompletePath, "\"))
 '                If (GetAttr(CompletePath) And vbDirectory) = vbDirectory Then
                  If IsDir(CompletePath) Then
-                    ' the request if for a directory listing...
-                    
-                    rInfo.DataStr = BuildHTMLDirList(PathShared, RequestedFile)
-                    rInfo.FileNum = -1
-                    If rInfo.DataStr = "" Then
-                        sHeader = "HTTP/1.0 404 Not Found" & vbNewLine & "Server: " & ServerName & vbNewLine & vbNewLine
-                         cServer.Send lngSocket, sHeader
-                         Exit Sub
-                   Else
-                        ' build the header
-                        sHeader = "HTTP/1.0 200 OK" & vbNewLine & _
-                                "Server: " & ServerName & vbNewLine & _
-                                "Content-Type: text/html" & vbNewLine & _
-                                "Content-Length: " & Len(rInfo.DataStr) & vbNewLine & _
-                                vbNewLine
-                    End If
-                    ' total data send is the header length + the length of the file requested
-                    rInfo.TotalLength = Len(sHeader) + Len(rInfo.DataStr)
+                         ' the request if for a directory listing...
+                         
+                         rInfo.DataStr = BuildHTMLDirList(PathShared, RequestedFile)
+                         rInfo.FileNum = -1
+                         If rInfo.DataStr = "" Then
+                             sHeader = "HTTP/1.0 404 Not Found" & vbNewLine & "Server: " & ServerName & vbNewLine & vbNewLine
+                              cServer.Send lngSocket, sHeader
+                              Exit Sub
+                        Else
+                             ' build the header
+                             sHeader = "HTTP/1.0 200 OK" & vbNewLine & _
+                                     "Server: " & ServerName & vbNewLine & _
+                                     "Content-Type: text/html" & vbNewLine & _
+                                     "Content-Length: " & Len(rInfo.DataStr) & vbNewLine & _
+                                     vbNewLine
+                         End If
+                         ' total data send is the header length + the length of the file requested
+                         rInfo.TotalLength = Len(sHeader) + Len(rInfo.DataStr)
                 Else
                     ' requested file exists, open the file, send header, and start the transfer
                     rInfo.FileName = RequestedFile
