@@ -988,7 +988,6 @@ cServer.Recv lngSocket, rData
                     Process_Post lngSocket
                 End If
             End If
-                    Process_Post lngSocket
             
         Else
             ' sometimes the browser makes "HEAD" requests (but it's not inplemented in this project)
