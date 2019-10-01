@@ -672,22 +672,22 @@ sHeader = sHeader & "REQUEST_URI=" & uri & vbCrLf
 sHeader = sHeader & "DOCUMENT_URI=" & doc_uri & vbCrLf
 sHeader = sHeader & "SCRIPT_NAME=" & scriptname & vbCrLf
 sHeader = sHeader & "PHP_SELF=" & scriptname & vbCrLf
+sHeader = sHeader & "HTTP_COOKIE=" & Header("Cookie") & vbCrLf
+sHeader = sHeader & "DOCUMENT_ROOT=" & sPath & vbCrLf
+sHeader = sHeader & "CONTEXT_DOCUMENT_ROOT=" & sPath & vbCrLf
+sHeader = sHeader & "HTTP_HOST=localhost:8080" & vbCrLf
+sHeader = sHeader & "HTTP_USER_AGENT=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Safari/537.36" & vbCrLf
 sHeader = sHeader & "REQUEST_SCHEME=http" & vbCrLf
 sHeader = sHeader & "REMOTE_HOST=localhost" & vbCrLf
 sHeader = sHeader & "REMOTE_ADDR=127.0.0.1" & vbCrLf
 sHeader = sHeader & "REMOTE_PORT=8080" & vbCrLf
 sHeader = sHeader & "SERVER_PORT=8080" & vbCrLf
-sHeader = sHeader & "HTTP_HOST=localhost:8080" & vbCrLf
-sHeader = sHeader & "HTTP_USER_AGENT=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Safari/537.36" & vbCrLf
-sHeader = sHeader & "DOCUMENT_ROOT=" & sPath & vbCrLf
-sHeader = sHeader & "CONTEXT_DOCUMENT_ROOT=" & sPath & vbCrLf
 sHeader = sHeader & "SERVER_SOFTWARE=nginx/1.16.0" & vbCrLf
 'sHeader = sHeader & "SERVER_SOFTWARE=Apache/2.4.27 (Win32) OpenSSL/1.1.0f PHP/7.0.16" & vbCrLf
 sHeader = sHeader & "SERVER_PROTOCOL=HTTP/1.1" & vbCrLf
 sHeader = sHeader & "SERVER_NAME=localhost" & vbCrLf
-sHeader = sHeader & "REDIRECT_STATUS=true" & vbCrLf
-sHeader = sHeader & "HTTP_COOKIE=" & Header("Cookie") & vbCrLf
 sHeader = sHeader & "SERVER_ADDR=127.0.0.1" & vbCrLf
+sHeader = sHeader & "REDIRECT_STATUS=true" & vbCrLf
         If Method = "POST" Then
 '            sHeader = sHeader & "CONTENT_TYPE=application/x-www-form-urlencoded" & vbCrLf
             sHeader = sHeader & "CONTENT_TYPE=" & Header("Content-type") & vbCrLf
